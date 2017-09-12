@@ -9,22 +9,20 @@ def cross(A, B):
 rows = 'ABCDEFGHI'
 cols = '123456789'
 
-#Inverted columns to cross with rows for diagonals
-cols_inv = cols[::-1]
-
 boxes = cross(rows, cols)
-row_units    = [cross(row, cols) for row in rows]
+row_units = [cross(row, cols) for row in rows]
 column_units = [cross(rows, col) for col in cols]
 square_units = [cross(sqr_row, sqr_col) for sqr_row in ('ABC', 'DEF', 'GHI') for sqr_col in ('123', '456', '789')]
 
-diagonal1_units = [[rows[x]+cols[x] for x in range(len(cols))]]
-diagonal2_units = [[rows[x]+cols_inv[x] for x in range(len(cols))]]
+diagonal1_units = [[rows[x] + cols[x] for x in range(len(cols))]]
+diagonal2_units = [[rows[x] + cols[-x - 1] for x in range(len(cols))]]
 
-#Adding diagonals as a new scenario
+# Adding diagonals as a new scenario
 unitlist = row_units + column_units + square_units + diagonal1_units + diagonal2_units
 
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
-peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
+peers = dict((s, set(sum(units[s], [])) - set([s])) for s in boxes)
+
 
 def assign_value(values, box, value):
     """
@@ -41,6 +39,7 @@ def assign_value(values, box, value):
         assignments.append(values.copy())
     return values
 
+
 def naked_twins(values):
     """Eliminate values using the naked twins strategy.
     Args:
@@ -51,15 +50,39 @@ def naked_twins(values):
     """
 
     # Find all instances of naked twins
-    pair_values = []
-    for box in values.keys():
-        if len(values[box]==2):
-            pair_values.append(values[box])
 
+    # Get all possible naked twins with their respective unit
 
-    
+    possible_naked_twins = []
+    for unit in unitlist:
+        possible_naked_twins += [[[box1,box2],unit] for box1 in unit \
+                                                        for box2 in unit \
+                                                            if box1!=box2 \
+                                                            and len(values[box1])==2 and len(values[box2]) == 2\
+                                                            and values[box1]==values[box2]]
+    # Get all naked twins
+    # Here we are adding the naked twin value
+    naked_twins = {}
+    for possible_naked_twin, unit in possible_naked_twins:
+        for possible_naked_twin2, unit2 in possible_naked_twins:
+            value = values[possible_naked_twin2[0]]
+            twin_unit = naked_twins.get(value)
+            if twin_unit == None:
+                naked_twins[value] = [unit2]
+            elif unit2 not in twin_unit:
+                naked_twins[value]=twin_unit+[unit2]
+
+    #Eliminate naked twins
+    for naked_value, units in naked_twins.items():
+        for unit in units:
+            for box in unit:
+                if naked_value != values[box]:
+                    for digit in naked_value:
+                        values = assign_value(values, box, values[box].replace(digit, ''))
+
     # Eliminate the naked twins as possibilities for their peers
 
+    return values
 
 
 def grid_values(grid):
@@ -82,6 +105,7 @@ def grid_values(grid):
     assert len(new_grid) == 81
     return dict(zip(boxes, new_grid))
 
+
 def display(values):
     """
     Display the values as a 2-D grid.
@@ -95,6 +119,7 @@ def display(values):
         if r in 'CF': print(line)
     return
 
+
 def eliminate(values):
     labels = [box for box in values.keys() if len(values[box]) == 1]
     for box in labels:
@@ -102,6 +127,7 @@ def eliminate(values):
         for peer in peers[box]:
             values = assign_value(values, peer, values[peer].replace(box_value, ''))
     return values
+
 
 def only_choice(values):
     posibilities = '123456789'
@@ -118,6 +144,7 @@ def only_choice(values):
                 values = assign_value(values, value, posibility)
 
     return values
+
 
 def reduce_puzzle(values):
     stalled = False
@@ -139,6 +166,7 @@ def reduce_puzzle(values):
         if len([box for box in values.keys() if len(values[box]) == 0]):
             return False
     return values
+
 
 def search(values):
     # First, reduce the puzzle using the previous function
@@ -169,6 +197,7 @@ def search(values):
         if solved:
             return solved
 
+
 def solve(grid):
     """
     Find the solution to a Sudoku grid.
@@ -179,19 +208,53 @@ def solve(grid):
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
     values = grid_values(grid)
+
     values = search(values)
 
     return values
 
+
 if __name__ == '__main__':
-    diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+
+    """
+        values = {"G7": "1569", "G6": "134568", "G5": "13568", "G4": "134568", "G3":
+            "2", "G2": "34589", "G1": "7", "G9": "5689", "G8": "15", "C9": "56",
+                  "C8": "3", "C3": "7", "C2": "1245689", "C1": "1245689", "C7": "2456",
+                  "C6": "1245689", "C5": "12568", "C4": "1245689", "E5": "4", "E4":
+                      "135689", "F1": "1234589", "F2": "12345789", "F3": "34589", "F4":
+                      "123589", "F5": "12358", "F6": "123589", "F7": "14579", "F8": "6",
+                  "F9": "3579", "B4": "1234567", "B5": "123567", "B6": "123456", "B7":
+                      "8", "B1": "123456", "B2": "123456", "B3": "345", "B8": "9", "B9":
+                      "567", "I9": "578", "I8": "27", "I1": "458", "I3": "6", "I2": "458",
+                  "I5": "9", "I4": "124578", "I7": "3", "I6": "12458", "A1": "2345689",
+                  "A3": "34589", "A2": "2345689", "E9": "2", "A4": "23456789", "A7":
+                      "24567", "A6": "2345689", "A9": "1", "A8": "4", "E7": "159", "E6":
+                      "7", "E1": "135689", "E3": "3589", "E2": "135689", "E8": "15", "A5":
+                      "235678", "H8": "27", "H9": "4", "H2": "3589", "H3": "1", "H1":
+                      "3589", "H6": "23568", "H7": "25679", "H4": "235678", "H5": "235678",
+                  "D8": "8", "D9": "3579", "D6": "123569", "D7": "14579", "D4":
+                      "123569", "D5": "12356", "D2": "12345679", "D3": "3459", "D1":
+                      "1234569"}
+
+        display(values)
+
+        values = naked_twins(values)
+        print("==============================================================================================")
+        display(values)
+        """
+
+    #diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+    diag_sudoku_grid ="9.1....8.8.5.7..4.2.4....6...7......5..............83.3..6......9................"
     display(solve(diag_sudoku_grid))
 
     try:
         from visualize import visualize_assignments
+
         visualize_assignments(assignments)
 
     except SystemExit:
         pass
     except:
         print('We could not visualize your board due to a pygame issue. Not a problem! It is not a requirement.')
+
+
