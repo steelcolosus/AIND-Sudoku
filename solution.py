@@ -62,18 +62,18 @@ def naked_twins(values):
                                                             and values[box1]==values[box2]]
     # Get all naked twins
     # Here we are adding the naked twin value
-    naked_twins = {}
+    naked_twins_dic = {}
     for possible_naked_twin, unit in possible_naked_twins:
         for possible_naked_twin2, unit2 in possible_naked_twins:
             value = values[possible_naked_twin2[0]]
-            twin_unit = naked_twins.get(value)
+            twin_unit = naked_twins_dic.get(value)
             if twin_unit == None:
-                naked_twins[value] = [unit2]
+                naked_twins_dic[value] = [unit2]
             elif unit2 not in twin_unit:
-                naked_twins[value]=twin_unit+[unit2]
+                naked_twins_dic[value]=twin_unit+[unit2]
 
     #Eliminate naked twins
-    for naked_value, units in naked_twins.items():
+    for naked_value, units in naked_twins_dic.items():
         for unit in units:
             for box in unit:
                 if naked_value != values[box]:
@@ -130,18 +130,18 @@ def eliminate(values):
 
 
 def only_choice(values):
-    posibilities = '123456789'
+    possibilities = '123456789'
     for unit in unitlist:
-        for posibility in posibilities:
+        for possibility in possibilities:
             count = 0
             value = ''
             for box in unit:
-                if posibility in values[box]:
+                if possibility in values[box]:
                     count += 1
                     if count == 1:
                         value = box
             if count == 1:
-                values = assign_value(values, value, posibility)
+                values = assign_value(values, value, possibility)
 
     return values
 
