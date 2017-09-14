@@ -51,17 +51,16 @@ def naked_twins(values):
 
     # Find all instances of naked twins
 
-    # Get all possible naked twins with their respective unit
-
+    # Get all possible pair boxes with the same value and assign the unit to it
     possible_naked_twins = []
     for unit in unitlist:
-        possible_naked_twins += [[[box1,box2],unit] for box1 in unit \
-                                                        for box2 in unit \
-                                                            if box1!=box2 \
-                                                            and len(values[box1])==2 and len(values[box2]) == 2\
-                                                            and values[box1]==values[box2]]
+        possible_naked_twins += [[[box1, box2], unit] for box1 in unit \
+                                 for box2 in unit \
+                                 if box1 != box2 \
+                                 and len(values[box1]) == 2 and len(values[box2]) == 2 \
+                                 and values[box1] == values[box2]]
     # Get all naked twins
-    # Here we are adding the naked twin value
+    # for each naked twin value as key of the dictionary add the affected units to a list
     naked_twins_dic = {}
     for possible_naked_twin, unit in possible_naked_twins:
         for possible_naked_twin2, unit2 in possible_naked_twins:
@@ -70,17 +69,15 @@ def naked_twins(values):
             if twin_unit == None:
                 naked_twins_dic[value] = [unit2]
             elif unit2 not in twin_unit:
-                naked_twins_dic[value]=twin_unit+[unit2]
+                naked_twins_dic[value] = twin_unit + [unit2]
 
-    #Eliminate naked twins
+    # Eliminate naked twins
     for naked_value, units in naked_twins_dic.items():
         for unit in units:
             for box in unit:
                 if naked_value != values[box]:
                     for digit in naked_value:
                         values = assign_value(values, box, values[box].replace(digit, ''))
-
-    # Eliminate the naked twins as possibilities for their peers
 
     return values
 
@@ -121,6 +118,14 @@ def display(values):
 
 
 def eliminate(values):
+    """
+    Eliminate values from peers of each box with a single value.
+
+    Go through all the boxes, and whenever there is a box with a single value,
+    eliminate this value from the set of values of all its peers.
+    :param values:  Sudoku in dictionary form.
+    :return: Resulting Sudoku in dictionary form after eliminating values.
+    """
     labels = [box for box in values.keys() if len(values[box]) == 1]
     for box in labels:
         box_value = values[box]
@@ -130,6 +135,15 @@ def eliminate(values):
 
 
 def only_choice(values):
+    """
+    Finalize all values that are the only choice for a unit.
+
+    Go through all the units, and whenever there is a unit with a value
+    that only fits in one box, assign the value to this box.
+
+    :param values: Sudoku in dictionary form.
+    :return: Resulting Sudoku in dictionary form after filling in only choices.
+    """
     possibilities = '123456789'
     for unit in unitlist:
         for possibility in possibilities:
@@ -147,6 +161,13 @@ def only_choice(values):
 
 
 def reduce_puzzle(values):
+    """
+    Iterate eliminate() and only_choice(). If at some point, there is a box with no available values, return False.
+    If the sudoku is solved, return the sudoku.
+    If after an iteration of both functions, the sudoku remains the same, return the sudoku.
+    :param values :A sudoku in dictionary form.
+    :return: The resulting sudoku in dictionary form.
+    """
     stalled = False
     while not stalled:
         # Check how many boxes have a determined value
@@ -243,8 +264,8 @@ if __name__ == '__main__':
         display(values)
         """
 
-    #diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
-    diag_sudoku_grid ="9.1....8.8.5.7..4.2.4....6...7......5..............83.3..6......9................"
+    # diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+    diag_sudoku_grid = "9.1....8.8.5.7..4.2.4....6...7......5..............83.3..6......9................"
     display(solve(diag_sudoku_grid))
 
     try:
@@ -256,5 +277,3 @@ if __name__ == '__main__':
         pass
     except:
         print('We could not visualize your board due to a pygame issue. Not a problem! It is not a requirement.')
-
-
